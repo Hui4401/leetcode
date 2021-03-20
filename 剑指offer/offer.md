@@ -463,15 +463,235 @@ def getLeastNumbers(self, arr: List[int], k: int) -> List[int]:
     return res
 ```
 
+### 41-数据流中位数
+
+- 一个大顶堆一个小顶堆，只要保证两者容量差不超过1（固定让一个多），就可以快速找出中间的数
+- 要注意每进来一个数都要在两个堆里走一遍，否则不能保证中间有序，比如1,3；2
+
+```python
+import heapq
+class MedianFinder:
+    def __init__(self):
+        self.heapmax = []
+        self.heapmin = []
+        heapq.heapify(self.heapmax)
+        heapq.heapify(self.heapmin)
+
+    def addNum(self, num: int) -> None:
+        heapq.heappush(self.heapmax, -num)
+        heapq.heappush(self.heapmin, -heapq.heappop(self.heapmax))
+        # 这里固定大顶堆比小顶堆多
+        if len(self.heapmin) - len(self.heapmax) >= 1:
+            heapq.heappush(self.heapmax, -heapq.heappop(self.heapmin))
+
+    def findMedian(self) -> float:
+        if len(self.heapmax) == len(self.heapmin):
+            return (self.heapmin[0] - self.heapmax[0]) / 2
+        return -self.heapmax[0]
+```
+
+### 43-1-1~n整数中1的个数
+
+- 将 n 写为 nxnx−1⋯ n2n1，将各位出现1的次数加起来，注意从后往前每次只关心当前位
+- 将 n 按位分为三段，high，cur，low，cur为当前位
+- 那么初始是个位，high为n//10，cur为n%10，low设为0，digit代表数位为1
+- 那么每次向前，low+=cur*digit，cur=high%10，high//=10，digit\*=10
+- cur 如果为 0，那么与low无关，接下来会降为9...1，一共high轮，所以有 high*digit 个1
+- cur 如果为 1，除了降为0之后的情况外，low位减少都要带着这个1，要多 low+1 个1
+- cur 如果大于1，除了降为0之后的情况外，它降为1时low位要经历完整的最大到最小，所以要多 low*digit 个1
+
+```python
+def countDigitOne(self, n: int) -> int:
+    digit = 1
+    high, cur, low = n // 10, n % 10, 0
+    res = 0
+    while high != 0 or cur != 0:
+        res += high * digit
+        if cur == 1:
+            res += low + 1
+        elif cur != 0:
+            res += digit
+        low += cur * digit
+        cur = high % 10
+        high //= 10
+        digit *= 10
+    return res
+```
+
 ### 44-数字序列中的某一位
+
+```python
+'''
+    数字范围    数量   位数    占多少位
+    1-9        9      1       9
+    10-99      90     2       180
+    100-999    900    3       2700
+    1000-9999  9000   4       36000
+'''
+def findNthDigit(self, n: int) -> int:
+    start = 1
+    count = 9
+    digit = 1
+    while n > count:
+        n -= count
+        digit += 1
+        start *= 10
+        count = digit * start * 9
+    num = start + (n-1) // digit
+    return int(str(num)[(n-1)%digit])
+```
+
+### 45-把数组排成最小数
+
+- 转为字符串，按 a+b < b+a 排序
+- python快排，不用设哨兵
+
+```python
+def minNumber(self, nums: List[int]) -> str:
+    tmp = [str(s) for s in nums]
+    def qsort(l, r):
+        if l >= r:
+            return
+        i, j = l, r
+        while i < j:
+            while tmp[j] + tmp[l] >= tmp[l] + tmp[j] and i < j:
+                j -= 1
+            while tmp[i] + tmp[l] <= tmp[l] + tmp[i] and i < j:
+                i += 1
+            tmp[i], tmp[j] = tmp[j], tmp[i]
+        tmp[l], tmp[i] = tmp[i], tmp[l]
+        qsort(l, i-1)
+        qsort(i+1, r)
+    qsort(0, len(tmp)-1)
+    return ''.join(tmp)
+```
+
+### 48-最长不重复子串
+
+i,j 从 0 开始，每当 j 指向的字符出现过（128数组），就从 i 指向的地方向后移动直到 j 指向的字符不再出现
+
+```python
+def lengthOfLongestSubstring(self, s: str) -> int:
+    flag = [False for _ in range(128)]
+    i = j = tmp = res = 0
+    while j < len(s) and (len(s) - i) >= res:
+        while flag[ord(s[j])]:
+            flag[ord(s[i])] = False
+            tmp -= 1
+            i += 1
+        flag[ord(s[j])] = True
+        tmp += 1
+        j += 1
+        if tmp > res:
+            res = tmp
+    return res
+```
+
+### 49-丑数
+
+- i 指向的数只能乘2，j 只能乘3，k 只能乘 5
+- 每次取三个数乘各自的因子后的最小值加入dp，同时每个乘积为最新dp的指针都 +1（去重）
+
+```python
+def nthUglyNumber(self, n: int) -> int:
+        dp = [0] * n
+        dp[0] = 1
+        i = j = k = 0
+        for x in range(1, n):
+            u2, u3, u5 = dp[i]*2, dp[j]*3, dp[k]*5
+            dp[x] = min(u2, u3, u5)
+            if dp[x] == u2:
+                i += 1
+            if dp[x] == u3:
+                j += 1
+            if dp[x] == u5:
+                k += 1
+        return dp[-1]
+```
 
 ### 53-2 0-n-1中缺失的数字
 
 有序就想二分
 
+### 56-1-数组中数字出现的次数
+
+- 全员异或得到出现一次的两个数的异或值（出现两次的异或后抵消为0）
+- 从低到高找到为1的位
+- 用这一位区分，这一位为1的放一起，不为1的放一起，分别异或得到两个出现一次的数
+
+```python
+def singleNumbers(self, nums: List[int]) -> List[int]:
+    tmp = 0
+    for num in nums:
+        tmp = tmp ^ num
+    div = 1
+    while div & tmp == 0:
+        div = div << 1
+    a, b = 0, 0
+    for num in nums:
+        if num & div:
+            a = a ^ num
+        else:
+            b = b ^ num
+    return [a, b]
+```
+
 ### 59-1-滑动窗口最大值
 
 单调队列，每次右移，如果移出去的元素等于队列头，从队列弹出这个元素，同时从尾部弹出所有小于窗口新增元素的元素，然后把新增元素加入队列
+
+### 59-2-队列的最大值
+
+- 最大值出队后，如何知道下一个最大值？单调队列
+
+```python
+class MaxQueue:
+    def __init__(self):
+        self.queue = deque()
+        self.helper = deque()
+
+    def max_value(self) -> int:
+        return self.helper[0] if self.helper else -1
+
+    def push_back(self, value: int) -> None:
+        self.queue.append(value)
+        while self.helper and self.helper[-1] < value:
+            self.helper.pop()
+        self.helper.append(value)
+
+    def pop_front(self) -> int:
+        if not self.queue:
+            return -1
+        res = self.queue.popleft()
+        if self.helper[0] == res:
+            self.helper.popleft()
+        return res
+```
+
+### 60-n个骰子的点数
+
+- dp\[i][j] 表示投出 i 个骰子后得到总点数 j 的次数
+- j 有 1到6 6中可能的点数，如果是1，那么总点数为 j 说明前一个是投出 j-1 的状态
+- 投 n 个骰子点数范围 n 到 6n，dp数组大小按最大来
+- n 个骰子总点数 6**n，除dp\[n][i]得到概率
+
+```python
+def dicesProbability(self, n: int) -> List[float]:
+    dp = [[0 for _ in range(67)] for _ in range(12)]
+    for i in range(1, 7):
+        dp[1][i] = 1
+    for i in range(2, n+1):
+        for j in range(i, 6*i+1):
+            for k in range(1, 7):
+                if j - k <= 0:
+                    break
+                dp[i][j] += dp[i-1][j-k]
+    total = 6 ** n
+    res = []
+    for i in range(n, n*6+1):
+        res.append(dp[n][i]/total)
+    return res
+```
 
 ### 61-扑克牌中的顺子
 
@@ -513,5 +733,23 @@ def add(self, a: int, b: int) -> int:
         a = a ^ b
         b = c
     return ~(a ^ x) if a & 0x80000000 else a
+```
+
+### 66-构建乘积数组
+
+![Picture1.png](https://cdn.jsdelivr.net/gh/Hui4401/imgbed/img/2021/03/20/20210320105303.png)
+
+```python
+def constructArr(self, a: List[int]) -> List[int]:
+    b = [1]*len(a)
+    # 下三角
+    for i in range(1, len(a)):
+        b[i] = b[i-1] * a[i-1]
+    # 上三角
+    tmp = 1
+    for i in range(len(a)-2, -1, -1):
+        tmp *= a[i+1]	# 记录上三角
+        b[i] *= tmp		# 原下三角乘上三角
+    return b
 ```
 
