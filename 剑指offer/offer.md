@@ -108,12 +108,13 @@ def movingCount(self, m: int, n: int, k: int) -> int:
 def cuttingRope(self, n: int) -> int:
     if n <= 3:
         return n-1
-    res = 1
-    # 分出尽可能多的3，4比较特殊分为2*2更好，所以剩余<=4时就直接将剩下的相乘返回
-    while n > 4:
-        res *= 3
-        n -= 3
-    return res * n
+    a = n // 3
+    b = n % 3
+    if b == 1:
+        return (3 ** (a-1)) * 4
+    elif b == 0:
+        return 3 ** a
+    return (3 ** a) * b
 ```
 
 ### 19-正则表达式匹配
@@ -752,4 +753,6 @@ def constructArr(self, a: List[int]) -> List[int]:
         b[i] *= tmp		# 原下三角乘上三角
     return b
 ```
+
+
 
