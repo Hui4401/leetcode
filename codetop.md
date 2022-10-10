@@ -88,7 +88,7 @@ class Solution:
             else:
                 y = 0
             tmp = x + y + add
-            res = str(tmp%10) +res
+            res = str(tmp % 10) +res
             add = tmp // 10
             i -= 1
             j -= 1
@@ -217,27 +217,6 @@ class Solution:
         return nums
 ```
 
-## 31-下一个排列
-
-```python
-class Solution:
-    def nextPermutation(self, nums: List[int]) -> None:
-        i = len(nums) - 2
-        while i >= 0 and nums[i] >= nums[i+1]:
-            i -= 1
-        if i >= 0:
-            j = len(nums) - 1
-            while j >= 0 and nums[j] <= nums[i]:
-                j -= 1
-            nums[i], nums[j] = nums[j], nums[i]
-        l, r = i + 1, len(nums) - 1
-        while l < r:
-            nums[l], nums[r] = nums[r], nums[l]
-            l += 1
-            r -= 1
-        return
-```
-
 ## 98-验证二叉搜索树
 
 ```python
@@ -311,45 +290,6 @@ class Solution:
             queue.append(node1.right)
             queue.append(node2.left)
         return True
-```
-
-## 3-无重复字符的最长子串
-
-```python
-class Solution:
-    def lengthOfLongestSubstring(self, s: str) -> int:
-        flag = dict()
-        i = j = res = tmp = 0
-        while i < len(s) - res:
-            while flag.get(s[j], False):
-                flag[s[i]] = False
-                tmp -= 1
-                i += 1
-            flag[s[j]] = True
-            tmp += 1
-            j += 1
-            if tmp > res:
-                res = tmp
-        return res
-```
-
-## 66-构建乘积数组
-
-![Picture1.png](imgs/20210320105303.png)
-
-```python
-class Solution:
-    def constructArr(self, a: List[int]) -> List[int]:
-        b = [1] * len(a)
-        tmp = 1
-        for i in range(1, len(b)):
-            tmp *= a[i-1]
-            b[i] *= tmp
-        tmp = 1
-        for i in range(len(b)-2, -1, -1):
-            tmp *= a[i+1]
-            b[i] *= tmp
-        return b
 ```
 
 ## 695-岛屿的最大面积
@@ -475,6 +415,17 @@ class Solution:
 ## 300-最长递增子序列
 
 ```python
+# dp做法
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        if not nums:
+            return 0
+        dp = [1] * len(nums)
+        for i in range(len(nums)):
+            for j in range(i):
+                if nums[i] > nums[j]:
+                    dp[i] = max(dp[i], dp[j] + 1)
+        return max(dp)
 # nlogn做法
 class Solution:
     def lengthOfLIS(self, nums: List[int]) -> int:
@@ -495,17 +446,6 @@ class Solution:
                         r = mid - 1
                 d[loc] = num
         return len(d)
-# dp做法
-class Solution:
-    def lengthOfLIS(self, nums: List[int]) -> int:
-        if not nums:
-            return 0
-        dp = [1] * len(nums)
-        for i in range(len(nums)):
-            for j in range(i):
-                if nums[i] > nums[j]:
-                    dp[i] = max(dp[i], dp[j] + 1)
-        return max(dp)
 ```
 
 ## 19-删除链表倒数第N个节点
@@ -626,37 +566,6 @@ class Solution:
             l = l.next
 ```
 
-## 215-第k个最大元素
-
-第k大不需要堆，前k大用
-
-```python
-class Solution:
-    def findKthLargest(self, nums: List[int], k: int) -> int:
-        # 从大到小一趟快排
-        def sort(l, r):
-            tmp = nums[l]
-            while l < r:
-                while l < r and nums[r] <= tmp:
-                    r -= 1
-                nums[l] = nums[r]
-                while l < r and nums[l] >= tmp:
-                    l += 1
-                nums[r] = nums[l]
-            nums[l] = tmp
-            return l
-        l, r = 0, len(nums)-1
-        while l <= r:
-            mid = sort(l, r)
-            if mid == k-1:
-                return nums[mid]
-            elif mid > k-1:
-                r = mid - 1
-            else:
-                l = mid + 1
-        return -1
-```
-
 ## 718-最长重复子数组
 
 这个必须是连续的，所以只有 a[i-1] == b[j-1] 的情况下，dp等于前一个状态+1
@@ -670,58 +579,11 @@ class Solution:
             for j in range(1, len(B)+1):
                 if A[i-1] == B[j-1]:
                     dp[i][j] = dp[i-1][j-1] + 1
-                    if dp[i][j] > res:
-                        res = dp[i][j]
+                    res = max(res, dp[i][j])
         return res
 ```
 
-## 5- 最长回文子串
-
-```python
-class Solution:
-    def longestPalindrome(self, s: str) -> str:
-        if len(s) < 2:
-            return s
-        maxlen = 1
-        start = 0
-        dp = [[False]*len(s) for _ in range(len(s))]
-        for i in range(len(s)):
-            dp[i][i] = True
-        for l in range(2, len(s)+1):
-            for i in range(len(s)):
-                j = l - 1 + i
-                if j > len(s) - 1:
-                    break
-                if s[i] == s[j] and (j - i  + 1 < 4 or dp[i+1][j-1]):
-                    dp[i][j] = True
-                if dp[i][j] and j - i + 1 > maxlen:
-                    maxlen = j - i + 1
-                    start = i
-        return s[start:start+maxlen]
-```
-
-
-
 # hard
-
-## 115-不同的子序列
-
-![image.png](imgs/1615916797-rXJnAT-image.png)
-
-```python
-class Solution:
-    def numDistinct(self, s: str, t: str) -> int:
-        dp = [[0] * (len(s)+1) for _ in range(len(t)+1)]
-        for i in range(len(s)+1):
-            dp[0][i] = 1
-        for i in range(1, len(t)+1):
-            for j in range(i, len(s)+1):
-                if t[i-1] == s[j-1]:
-                    dp[i][j] = dp[i-1][j-1] + dp[i][j-1]
-                else:
-                    dp[i][j] = dp[i][j-1]
-        return dp[-1][-1]
-```
 
 ## 123-买卖股票3
 
